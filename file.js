@@ -1,11 +1,25 @@
 import WAWebJS, { Client } from 'whatsapp-web.js';
 import qrcode from 'qrcode-terminal';
 import OpenAI from 'openai';
+import fs from 'fs';
+import path from 'path';
 
 import 'dotenv/config';
 
 
-const client = new Client();
+// Define the path for the session file
+const SESSION_FILE_PATH = path.join(process.cwd(), 'session.json');
+
+// Initialize client with session data if it exists
+let sessionCfg;
+if (fs.existsSync(SESSION_FILE_PATH)) {
+    sessionCfg = require(SESSION_FILE_PATH);
+}
+
+const client = new Client({
+    session: sessionCfg
+});
+
 
 // Simple in-memory queue
 const messageQueue = [];
@@ -94,6 +108,21 @@ client.on('ready', () => {
     // .catch(error => {
     //     console.error('Error sending message:', error);
     // });
+});
+
+client.on('auth_failure', msg => {
+    console.error('Auth failure', msg);
+});
+
+client.on('disconnected', reason => {
+    console.log('Client was logged out', reason);
+});
+
+client.on('auth_ready', session => {
+    // Save session to file
+    const sessionData = JSON.stringify(session, null, 2);
+    fs.writeFileSync(SESSION_FILE_PATH, sessionData);
+    console.log('Session saved:', SESSION_FILE_PATH);
 });
 
 // Listen to all incoming messages
