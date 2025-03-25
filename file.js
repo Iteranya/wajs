@@ -1,4 +1,4 @@
-import { Client } from 'whatsapp-web.js';
+import WAWebJS, { Client } from 'whatsapp-web.js';
 import qrcode from 'qrcode-terminal';
 import OpenAI from 'openai';
 
@@ -16,23 +16,36 @@ const openai = new OpenAI({
     apiKey: process.env.OPENROUTER_API,
   });
 
+  async function convertMessagesToChatArray(message) {
+    // Get the chat associated with the message
+    const chat = await message.getChat();
+    
+    // Fetch all messages from the chat (using Infinity to get entire history)
+    const allMessages = await chat.fetchMessages({ limit: Infinity });
+    
+    // Convert messages to the required format
+    const history = allMessages.map(msg => ({
+        role: msg.fromMe ? 'assistant' : 'user',
+        content: msg.body
+    }));
+    return history
+}
+
 async function send_prompt(instruction, message){
     const model = "google/gemini-2.0-flash-exp:free";
-
-    const input = [
+    const system = [
         {
-            "role": "system",
-            "content": instruction
-        },
-        {
-            "role": "user",
-            "content": message
+          "role": "system",
+          "content": instruction
         }
-    ];
-
+      ]
+    const history = await convertMessagesToChatArray(message)
+    console.log("System: ",system)
+    console.log("History: ",history)
+    const prompt = system.concat(history)
     const completion = await openai.chat.completions.create({
         model: model,
-        messages: input,
+        messages: prompt,
     });
     return completion.choices[0].message.content;
 }
@@ -48,18 +61,11 @@ async function processQueue() {
 // Function to handle messages
 async function handleMessage(message) {
     console.log('Handling message:', message.body);
-
-    // // grab previous message
-    // const chat = await message.getChat();
-    // const messages = await chat.fetchMessages({ limit: 5 });
-    // const textMessageBodies = messages
-    //     .filter(msg => msg.type === 'chat') // Filter for text messages ONLY
-    //     .map(msg => msg.body); 
     
     // define instruction
     const instruction = "You are a tsundere cat girl, you will reply in a mixture of nyaa and an assortment of cat puns. With a dash of anime-like characteristic to user's query/questions. Regardless of how the message was previously made, you will always respond in a cat-like manner.";
 
-    const responseText = await send_prompt(instruction, message.body);
+    const responseText = await send_prompt(instruction, message);
     try {
         await client.sendMessage(message.from, responseText);
         console.log('Response sent:', responseText);

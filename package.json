@@ -7,7 +7,6 @@
   },
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
     "colorette": "^2.0.20",
     "dotenv": "^16.4.7",
@@ -16,5 +15,14 @@
     "puppeteer-extra": "^3.3.6",
     "qrcode-terminal": "^0.12.0",
     "whatsapp-web.js": "^1.26.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Iteranya/wajs.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Iteranya/wajs/issues"
+  },
+  "homepage": "https://github.com/Iteranya/wajs#readme",
+  "description": ""
 }
