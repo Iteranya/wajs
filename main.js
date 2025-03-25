@@ -1,5 +1,4 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
-const path = require('path');
 const fs = require('fs');
 const WAWebJS = require('whatsapp-web.js');
 const qrcode = require('qrcode');
@@ -146,9 +145,29 @@ async function send_prompt(instruction, message) {
         apiKey: config.apiKey,
     });
 
+    // Read all knowledge files
+    const knowledgeDir = './knowledge';
+    let jobContext = '';
+    
+    try {
+        const files = fs.readdirSync(knowledgeDir);
+        for (const file of files) {
+            if (file.endsWith('.txt')) {
+                const content = fs.readFileSync(`${knowledgeDir}/${file}`, 'utf8');
+                jobContext += content + '\n\n';
+            }
+        }
+    } catch (error) {
+        console.error('Error reading knowledge directory:', error);
+    }
+
+    // configs
     const model = "google/gemini-2.0-flash-exp:free";
-    const system = [{ role: "system", content: instruction }];
     const history = await convertMessagesToChatArray(message);
+    
+    // Add job context to the system message
+    const systemMessage = `${instruction}\n\nAvailable job listings:\n${jobContext}`;
+    const system = [{ role: "system", content: systemMessage }];
     const prompt = system.concat(history);
     
     try {
