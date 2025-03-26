@@ -129,7 +129,7 @@ async function processQueue() {
 async function handleMessage(message) {
     try {
         const config = JSON.parse(fs.readFileSync('config.json'));
-        const instruction = config.instruction || "You are a tsundere cat girl...";
+        const instruction = config.instruction || "You are a helpful AI assistant.";
         const responseText = await send_prompt(instruction, message);
         await client.sendMessage(message.from, responseText);
         mainWindow.webContents.send('log', `Response sent: ${responseText}`);
